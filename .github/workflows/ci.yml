@@ -6,11 +6,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: uptime
-        run: uptime
+      - name:  checkout code
+        uses: actions/checkout@v4 
+      - name: Build image
+        run: docker build -t tayad25/ciportfolios .
 
-      - name: number of processors
-        run: nproc
+      - name: List Images
+        run: docker images
 
   test:
     needs: build
