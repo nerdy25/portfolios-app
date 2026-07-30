@@ -40,5 +40,5 @@ jobs:
 
 
     - name: Push Docker image to ECR
-      run: |
+      run: 
         docker push $ECR_REPOSITORY:${{ github.sha }}
