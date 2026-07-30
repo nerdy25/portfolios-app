@@ -1,11 +1,10 @@
-name: Build and Push to ECR (OIDC)
+name: Build and Push to ECR
 
 on:
   push:
     branches:
       - main
 
-# REQUIRED permission to request the OIDC JWT token from GitHub
 permissions:
   id-token: write
   contents: read
@@ -13,33 +12,33 @@ permissions:
 env:
   AWS_REGION: ${{ secrets.AWS_REGIONS }}
   ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-  ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_SECRET }}
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
 
-      # Log in to AWS using the assumed IAM Role via OIDC
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
-          aws-region: ${{ env.AWS_REGION }}
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      # Authenticate Docker with Amazon ECR
-      - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
 
-      # Build and Push Docker Image
-      - name: Build, Tag, and Push Docker Image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_SECRET }}
+        aws-region: ${{ env.AWS_REGION }}
+
+
+    - name: Login to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v2
+
+
+    - name: Build Docker image
+      run: |
+        docker build -t $ECR_REPOSITORY:${{ github.sha }} .
+
+
+    - name: Push Docker image to ECR
+      run: |
+        docker push $ECR_REPOSITORY:${{ github.sha }}
